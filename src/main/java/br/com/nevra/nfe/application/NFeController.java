@@ -32,6 +32,11 @@ public class NFeController {
         return ResponseEntity.status(HttpStatus.OK).body(nFeService.obterXML());
     }
 
+    @GetMapping("/json")
+    public ResponseEntity<String> carregarXMLComoJSON(@RequestBody String path) throws Exception {
+        return ResponseEntity.status(HttpStatus.OK).body(nFeService.carregarJSON(path));
+    }
+
     @GetMapping("/calculo/impostos")
     public ResponseEntity<List<Imposto>> calcularImposto(@RequestBody List<Produto> produtos) {
         List<Imposto> impostos = new ArrayList<>();
