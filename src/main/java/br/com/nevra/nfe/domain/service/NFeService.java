@@ -1,8 +1,8 @@
 package br.com.nevra.nfe.domain.service;
 
 import br.com.nevra.acbr.infrastructure.ACBrNFe;
-import br.com.nevra.nfe.domain.model.Imposto;
-import br.com.nevra.nfe.domain.model.Produto;
+import br.com.nevra.nfe.domain.model.*;
+import br.com.nevra.util.MathUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -36,40 +36,80 @@ public class NFeService {
     }
 
     public Imposto calcularImposto(Produto produto) {
-        Imposto imposto = new Imposto();
+        Imposto imposto = Imposto.builder().build();
         Double pICMS;
-        imposto.setPIPI(Double.parseDouble(produto.getPIPI()));
-        imposto.setVBCIPI(Double.parseDouble(produto.getVProd()));
-        imposto.setVIPI(imposto.round2(imposto.getVBCIPI() * (imposto.getPIPI() / 100)));
+        // Calcular IPI
+        imposto.setIPI(calcularIPI(produto));
 
         // Calculo COFINS
-        imposto.setPCOFINS(Double.parseDouble(produto.getPCOFINS()));
-        imposto.setVBCCOFINS(Double.parseDouble(produto.getVProd()));
-        imposto.setVCOFINS(imposto.round2(imposto.getVBCCOFINS() * (Double.parseDouble(produto.getPCOFINS()) / 100)));
-
+        imposto.setCOFINS(calcularCOFINS(produto));
 
         // Calculo PIS
-        imposto.setPPIS(Double.parseDouble(produto.getPPIS()));
-        imposto.setVBCPIS(Double.parseDouble(produto.getVProd()));
-        imposto.setVPIS(imposto.round2(imposto.getVBCPIS() * (Double.parseDouble(produto.getPPIS()) / 100)));
+        imposto.setPIS(calcularPIS(produto));
 
         // Calculo ICMS
-        pICMS = 1 - (Double.parseDouble(produto.getPICMS()) / 100);
-        imposto.setPICMS(Double.parseDouble(produto.getPICMS()));
-        imposto.setVBCICMS(imposto.round2((Double.parseDouble(produto.getVProd()) +
-                Double.parseDouble(produto.getVII()) +
-                imposto.getVIPI() +
-                imposto.getVPIS() +
-                imposto.getVCOFINS() +
-                Double.parseDouble(produto.getVOutro())) /
-                pICMS));
-        imposto.setVICMS(imposto.round2(imposto.getVBCICMS() * (imposto.getPICMS() / 100)));
-        imposto.setVII(Double.parseDouble(produto.getVII()));
-        imposto.setPPIS(Double.parseDouble(produto.getPPIS()));
+        imposto.setICMS(calcularICMS(imposto, produto));
 
+        // Setando valores
+        imposto.setVII(Double.parseDouble(produto.getVII()));
         imposto.setVItem(Double.parseDouble(produto.getVProd()));
 
         return imposto;
+    }
+
+    public IPI calcularIPI(Produto produto) {
+        double pIPI, vBC, vIPI;
+        pIPI = Double.parseDouble(produto.getPIPI());
+        vBC = Double.parseDouble(produto.getVProd());
+        vIPI = MathUtil.round2(vBC * (pIPI / 100));
+        return IPI.builder()
+                .pIPI(pIPI)
+                .vBC(vBC)
+                .vIPI(vIPI)
+                .build();
+    }
+
+    public COFINS calcularCOFINS(Produto produto) {
+        double pCOFINS, vBC, vCOFINS;
+        pCOFINS = Double.parseDouble(produto.getPCOFINS());
+        vBC = Double.parseDouble(produto.getVProd());
+        vCOFINS = MathUtil.round2(vBC * (pCOFINS / 100));
+        return COFINS.builder()
+                .pCOFINS(pCOFINS)
+                .vBC(vBC)
+                .vCOFINS(vCOFINS)
+                .build();
+    }
+
+    public PIS calcularPIS(Produto produto) {
+        double pPIS, vBC, vPIS;
+        pPIS = Double.parseDouble(produto.getPPIS());
+        vBC = Double.parseDouble(produto.getVProd());
+        vPIS = MathUtil.round2(vBC * (pPIS / 100));
+        return PIS.builder()
+                .pPIS(pPIS)
+                .vBC(vBC)
+                .vPIS(vPIS)
+                .build();
+    }
+
+    public ICMS calcularICMS(Imposto imposto, Produto produto) {
+        double pICMS, vBC, vICMS;
+        pICMS = 1 - (Double.parseDouble(produto.getPICMS()) / 100);
+        vBC = MathUtil.round2(
+                (Double.parseDouble(produto.getVProd()) +
+                Double.parseDouble(produto.getVII()) +
+                imposto.getIPI().getVIPI() +
+                imposto.getPIS().getVPIS() +
+                imposto.getCOFINS().getVCOFINS() +
+                Double.parseDouble(produto.getVOutro())) /
+                pICMS);
+        vICMS = MathUtil.round2(vBC * (Double.parseDouble(produto.getPICMS()) / 100));
+        return ICMS.builder()
+                .pICMS(Double.parseDouble(produto.getPICMS()))
+                .vBC(vBC)
+                .vICMS(vICMS)
+                .build();
     }
 
 //    public Imposto calcularTotal(Imposto imposto, Imposto total) {

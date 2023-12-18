@@ -35,10 +35,10 @@ public class NFeController {
     @GetMapping("/calculo/impostos")
     public ResponseEntity<List<Imposto>> calcularImposto(@RequestBody List<Produto> produtos) {
         List<Imposto> impostos = new ArrayList<>();
-//        Imposto total = new Imposto();
         for (Produto p : produtos) {
             impostos.add(nFeService.calcularImposto(p));
         }
+//        Imposto total = Imposto.builder().build();
 //        for (Imposto i : impostos) {
 //            nFeService.calcularTotal(i, total);
 //        }
