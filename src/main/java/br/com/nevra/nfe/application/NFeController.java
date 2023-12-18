@@ -38,11 +38,11 @@ public class NFeController {
         for (Produto p : produtos) {
             impostos.add(nFeService.calcularImposto(p));
         }
-//        Imposto total = Imposto.builder().build();
-//        for (Imposto i : impostos) {
-//            nFeService.calcularTotal(i, total);
-//        }
-//        impostos.add(total);
+        Imposto total = nFeService.iniciarImpostoZerado();
+        for (Imposto i : impostos) {
+           total = nFeService.calcularTotal(i, total);
+        }
+        impostos.add(total);
         return ResponseEntity.status(HttpStatus.OK).body(impostos);
     }
 }
